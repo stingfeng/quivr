@@ -19,7 +19,7 @@ export default function SignUp() {
     setIsPending(true);
     if (email !== "fengyue@agora.io") {
       publish({
-        variant: "rejection",
+        variant: "danger",
         text: "You are not allowed to sign up.",
       });
       setIsPending(false);

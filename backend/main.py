@@ -36,7 +36,7 @@ async def startup_event():
 
 
 
-@app.post("/upload", dependencies=[Depends(JWTBearer())])
+#@app.post("/upload", dependencies=[Depends(JWTBearer())])
 async def upload_file(commons: CommonsDep,  file: UploadFile, enable_summarization: bool = False, credentials: dict = Depends(JWTBearer())):
     max_brain_size = os.getenv("MAX_BRAIN_SIZE")
    
@@ -114,7 +114,7 @@ async def chat_endpoint(commons: CommonsDep, chat_message: ChatMessage, credenti
     return {"history": history}
 
 
-@app.post("/crawl/", dependencies=[Depends(JWTBearer())])
+#@app.post("/crawl/", dependencies=[Depends(JWTBearer())])
 async def crawl_endpoint(commons: CommonsDep, crawl_website: CrawlWebsite, enable_summarization: bool = False, credentials: dict = Depends(JWTBearer())):
     user = User(email=credentials.get('email', 'none'))
     file_path, file_name = crawl_website.process()
@@ -130,7 +130,7 @@ async def crawl_endpoint(commons: CommonsDep, crawl_website: CrawlWebsite, enabl
     return message
 
 
-@app.get("/explore", dependencies=[Depends(JWTBearer())])
+#@app.get("/explore", dependencies=[Depends(JWTBearer())])
 async def explore_endpoint(commons: CommonsDep,credentials: dict = Depends(JWTBearer()) ):
     user = User(email=credentials.get('email', 'none'))
     response = commons['supabase'].table("vectors").select(
@@ -144,7 +144,7 @@ async def explore_endpoint(commons: CommonsDep,credentials: dict = Depends(JWTBe
     return {"documents": unique_data}
 
 
-@app.delete("/explore/{file_name}", dependencies=[Depends(JWTBearer())])
+#@app.delete("/explore/{file_name}", dependencies=[Depends(JWTBearer())])
 async def delete_endpoint(commons: CommonsDep, file_name: str, credentials: dict = Depends(JWTBearer())):
     user = User(email=credentials.get('email', 'none'))
     # Cascade delete the summary from the database first, because it has a foreign key constraint
@@ -155,7 +155,7 @@ async def delete_endpoint(commons: CommonsDep, file_name: str, credentials: dict
     return {"message": f"{file_name} of user {user.email} has been deleted."}
 
 
-@app.get("/explore/{file_name}", dependencies=[Depends(JWTBearer())])
+#@app.get("/explore/{file_name}", dependencies=[Depends(JWTBearer())])
 async def download_endpoint(commons: CommonsDep, file_name: str,credentials: dict = Depends(JWTBearer()) ):
     user = User(email=credentials.get('email', 'none'))
     response = commons['supabase'].table("vectors").select(
