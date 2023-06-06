@@ -26,24 +26,15 @@ const NavItems: FC<NavItemsProps> = ({ className, setOpen, ...props }) => {
     >
       {isLocal || isUserLoggedIn ? (
         <>
-          <NavLink setOpen={setOpen} to="/upload">
-            Upload
-          </NavLink>
           <NavLink setOpen={setOpen} to="/chat">
             Chat
-          </NavLink>
-          <NavLink setOpen={setOpen} to="/explore">
-            Explore
           </NavLink>
         </>
       ) : (
         <>
-          <NavLink setOpen={setOpen} to="https://github.com/StanGirard/quivr">
-            Github
-          </NavLink>
-          <NavLink setOpen={setOpen} to="https://discord.gg/HUpRgp2HG8">
-            Discord
-          </NavLink>
+          <Link href={"/login"}>
+            <Button variant={"secondary"}>Login</Button>
+          </Link>
         </>
       )}
       <div className="flex sm:flex-1 sm:justify-end flex-col items-center justify-center sm:flex-row gap-5 sm:gap-2">
@@ -63,10 +54,10 @@ const NavItems: FC<NavItemsProps> = ({ className, setOpen, ...props }) => {
           </>
         )}
         {!isLocal && !isUserLoggedIn && (
-          <Link href={"https://try-quivr.streamlit.app"}>
-            <Button variant={"secondary"}>Try Demo</Button>
+            <Link href={"/login"}>
+            <Button variant={"secondary"}>Login</Button>
           </Link>
-        )}
+      )}
         <DarkModeToggle />
       </div>
     </ul>
