@@ -17,6 +17,7 @@ async def process_file(file: UploadFile, loader_class, file_suffix, enable_summa
     file_name = file.filename
     file_size = file.file._file.tell()  # Getting the size of the file
     dateshort = time.strftime("%Y%m%d")
+    tag = os.getenv("DOCUMENT_TAG")
 
     # Here, we're writing the uploaded file to a temporary file, so we can use it with your existing code.
     with tempfile.NamedTemporaryFile(delete=False, suffix=file.filename) as tmp_file:
@@ -31,8 +32,8 @@ async def process_file(file: UploadFile, loader_class, file_suffix, enable_summa
         file_sha1 = compute_sha1_from_file(tmp_file.name)
 
     os.remove(tmp_file.name)
-    chunk_size = 500
-    chunk_overlap = 0
+    chunk_size = os.getenv("CHUNK_SIZE") or 1000
+    chunk_overlap = os.getenv("CHUNK_OVERLAP") or 0
 
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -49,6 +50,8 @@ async def process_file(file: UploadFile, loader_class, file_suffix, enable_summa
             "date": dateshort,
             "summarization": "true" if enable_summarization else "false"
         }
+        if tag:
+            metadata["tag"] = tag
         doc_with_metadata = Document(
             page_content=doc.page_content, metadata=metadata)
         create_vector(user.email, doc_with_metadata)
