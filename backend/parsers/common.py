@@ -32,8 +32,16 @@ async def process_file(file: UploadFile, loader_class, file_suffix, enable_summa
         file_sha1 = compute_sha1_from_file(tmp_file.name)
 
     os.remove(tmp_file.name)
-    chunk_size = os.getenv("CHUNK_SIZE") or 1000
-    chunk_overlap = os.getenv("CHUNK_OVERLAP") or 0
+    chunk_size = os.getenv("CHUNK_SIZE")
+    if chunk_size:
+        chunk_size = int(chunk_size)
+    else:
+        chunk_size = 10000
+    chunk_overlap = os.getenv("CHUNK_OVERLAP")
+    if chunk_overlap:
+        chunk_overlap = int(chunk_overlap)
+    else:
+        chunk_overlap = 0
 
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -54,7 +62,7 @@ async def process_file(file: UploadFile, loader_class, file_suffix, enable_summa
             metadata["tag"] = tag
         doc_with_metadata = Document(
             page_content=doc.page_content, metadata=metadata)
-        create_vector(user.email, doc_with_metadata)
+        ids = create_vector(user.email, doc_with_metadata)
             #     add_usage(stats_db, "embedding", "audio", metadata={"file_name": file_meta_name,"file_type": ".txt", "chunk_size": chunk_size, "chunk_overlap": chunk_overlap})
 
         if enable_summarization and ids and len(ids) > 0:

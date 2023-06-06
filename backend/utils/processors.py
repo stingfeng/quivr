@@ -20,6 +20,7 @@ file_processors = {
     ".txt": process_txt,
     ".csv": process_csv,
     ".md": process_markdown,
+    ".mdx": process_markdown,
     ".markdown": process_markdown,
     ".m4a": process_audio,
     ".mp3": process_audio,

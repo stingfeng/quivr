@@ -6,7 +6,6 @@ from langchain.chat_models import ChatOpenAI, ChatVertexAI
 from langchain.chat_models.anthropic import ChatAnthropic
 from langchain.docstore.document import Document
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import VertexAI
 from langchain.memory import ConversationBufferMemory
 from langchain.vectorstores import SupabaseVectorStore
 from llm import LANGUAGE_PROMPT
@@ -73,7 +72,7 @@ def create_clients_and_embeddings(openai_api_key, supabase_url, supabase_key):
     
     return supabase_client, embeddings
 
-def get_qa_llm(chat_message: ChatMessage, user_id: str):
+def get_qa_llm(chat_message: ChatMessage, user_id: str, max_tokens_limit = 1024):
     '''Get the question answering language model.'''
     openai_api_key, anthropic_api_key, supabase_url, supabase_key = get_environment_variables()
     supabase_client, embeddings = create_clients_and_embeddings(openai_api_key, supabase_url, supabase_key)
@@ -93,8 +92,8 @@ def get_qa_llm(chat_message: ChatMessage, user_id: str):
             ChatOpenAI(
                 model_name=chat_message.model, openai_api_key=openai_api_key, 
                 temperature=chat_message.temperature, max_tokens=chat_message.max_tokens), 
-                vector_store.as_retriever(), memory=memory, verbose=True, 
-                max_tokens_limit=1024)
+                vector_store.as_retriever(), memory=memory, verbose=False, 
+                max_tokens_limit=max_tokens_limit)
     elif chat_message.model.startswith("vertex"):
         qa = ConversationalRetrievalChain.from_llm(
             ChatVertexAI(), vector_store.as_retriever(), memory=memory, verbose=False, max_tokens_limit=1024)

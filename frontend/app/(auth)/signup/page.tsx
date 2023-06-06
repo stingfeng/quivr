@@ -17,10 +17,11 @@ export default function SignUp() {
   const { publish } = useToast();
   const handleSignUp = async () => {
     setIsPending(true);
-    if (email !== "fengyue@agora.io") {
+    let regex = /@(agora\.io|shengwang\.cn)$/;
+    if (!regex.test(email)) {
       publish({
         variant: "danger",
-        text: "You are not allowed to sign up.",
+        text: "Only employee of Agora or Shengwang are allowed to sign up.",
       });
       setIsPending(false);
       return;

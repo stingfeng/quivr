@@ -25,6 +25,15 @@ async def list_files():
     msg = await explore_endpoint(commons, credentials)
     print(msg)
 
+async def remove_files_by_tag(tag):
+    email = credentials['email']
+    # Cascade delete the summary from the database first, because it has a foreign key constraint
+    commons['supabase'].table("summaries").delete().match(
+        {"metadata->>tag": tag}).execute()
+    commons['supabase'].table("vectors").delete().match(
+        {"metadata->>tag": tag, "user_id": email}).execute()
+    print({"message": f"files with {tag} of user {email} have been all deleted."})
+
 async def remove_file(filename):
     msg = await delete_endpoint(commons, filename, credentials)
     print(msg)
@@ -99,6 +108,7 @@ if __name__ == '__main__':
     parser.add_argument('--dir', metavar='dirname', help='The directory to operate on.')
     parser.add_argument('--out', metavar='output file name', help='The file to output.')
     parser.add_argument('--allow', metavar='wildcard', help='accepted file wildcard, e.g. *.md')
+    parser.add_argument('--tag', metavar='tag of files', help='tag you pushed files with')
 
     # 解析命令行参数
     args = parser.parse_args()
@@ -108,20 +118,23 @@ if __name__ == '__main__':
         chat_message = ChatMessage(
             question='',
             history = [],
-            max_tokens = 500,
+            max_tokens = 1000,
+            use_summarization = True,
         )
         while True:
             chat_message.question = input("Enter your question here: ")
             if chat_message.question == 'exit':
-                break;
+                break
             asyncio.run(get_answer(chat_message))
     elif args.command == 'ls':
         asyncio.run(list_files())
     elif args.command == 'rm':
-        if args.file is None:
-            print("Please provide a file name with the --file option.")
-        else:
+        if args.file is not None:
             asyncio.run(remove_file(args.file))
+        elif args.tag is not None:
+            asyncio.run(remove_files_by_tag(args.tag))
+        else:
+            print("Please provide a file name with the --file option, or a tag with the --tag option.")
     elif args.command == 'pull':
         if args.file is None:
             print("Please provide a file name with the --file option.")

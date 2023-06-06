@@ -78,7 +78,6 @@ async def chat_endpoint(commons: CommonsDep, chat_message: ChatMessage, credenti
     history = chat_message.history
     history.append(("user", chat_message.question))
 
-    qa = get_qa_llm(chat_message, user.email)
 
     if old_request_count == 0: 
         create_user(user_id= user.email, date=date)
@@ -88,6 +87,12 @@ async def chat_endpoint(commons: CommonsDep, chat_message: ChatMessage, credenti
         history.append(('assistant', "You have reached your requests limit"))
         return {"history": history }
 
+    # [HACK] all users share one brain if specified
+    # other endpoints do not use this hack to prevent from dangerous operations
+    user_id = os.environ.get("USER_EMAIL")
+    if user_id is None:
+        user_id = user.email
+    qa = get_qa_llm(chat_message, user_id)
 
     if chat_message.use_summarization:
         # 1. get summaries from the vector store based on question

@@ -63,6 +63,7 @@ def create_vector(user_id,doc):
     if sids and len(sids) > 0:
         supabase_client.table("vectors").update(
             {"user_id": user_id}).match({"id": sids[0]}).execute()
+    return sids
 
 def create_user(user_id, date):
     logger.info(f"New user entry in db document for user {user_id}")
