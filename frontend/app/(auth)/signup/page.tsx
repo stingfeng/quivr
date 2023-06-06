@@ -17,6 +17,14 @@ export default function SignUp() {
   const { publish } = useToast();
   const handleSignUp = async () => {
     setIsPending(true);
+    if (email !== "fengyue@agora.io") {
+      publish({
+        variant: "rejection",
+        text: "You are not allowed to sign up.",
+      });
+      setIsPending(false);
+      return;
+    }
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
