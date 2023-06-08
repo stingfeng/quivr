@@ -9,6 +9,7 @@ from utils.vectors import (common_dependencies)
 from fastapi import UploadFile
 from main import chat_endpoint, explore_endpoint, delete_endpoint, download_endpoint, upload_file
 from mock_processors import mock_filter_file
+from crawl.crawler import CrawlWebsite
 
 commons = common_dependencies()
 
@@ -16,6 +17,10 @@ commons = common_dependencies()
 credentials = {
     "email": os.environ.get("USER_EMAIL")
 }
+
+async def crawl_website(url, out_dir):
+    crawler = CrawlWebsite(url=url)
+    await crawler.process(out_dir=out_dir)
 
 async def get_answer(chat_message: ChatMessage):
     msg = await chat_endpoint(commons, chat_message, credentials)
@@ -103,12 +108,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # 添加命令行参数
-    parser.add_argument('command', choices=['run', 'ls', 'rm', 'pull', 'push', 'push-dir', 'test', 'combine'], help='The command to execute.')
+    parser.add_argument('command', choices=['run', 'ls', 'rm', 'pull', 'push', 'push-dir', 'test', 'combine', 'crawl'], help='The command to execute.')
     parser.add_argument('--file', metavar='input file name', help='The file to operate on.')
     parser.add_argument('--dir', metavar='dirname', help='The directory to operate on.')
     parser.add_argument('--out', metavar='output file name', help='The file to output.')
     parser.add_argument('--allow', metavar='wildcard', help='accepted file wildcard, e.g. *.md')
     parser.add_argument('--tag', metavar='tag of files', help='tag you pushed files with')
+    parser.add_argument('--url', metavar='a website to crawl', help='The website to crawl.')
 
     # 解析命令行参数
     args = parser.parse_args()
@@ -166,3 +172,8 @@ if __name__ == '__main__':
             print("Please provide a wildcard to collect.")
         else:
             asyncio.run(combine_files(args.dir, args.out, args.allow))
+    elif args.command == 'crawl':
+        if args.url is None:
+            print("Please provide a url to crawl files.")
+        else:
+            asyncio.run(crawl_website(args.url, args.dir))

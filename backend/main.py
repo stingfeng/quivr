@@ -13,8 +13,6 @@ from logger import get_logger
 from middlewares.cors import add_cors_middleware
 from models.chats import ChatMessage
 from models.users import User
-from pydantic import BaseModel
-from supabase import Client
 from utils.file import convert_bytes, get_file_size
 from utils.processors import filter_file
 from utils.vectors import (CommonsDep, create_user, similarity_search,
@@ -93,6 +91,7 @@ async def chat_endpoint(commons: CommonsDep, chat_message: ChatMessage, credenti
     if user_id is None:
         user_id = user.email
     qa = get_qa_llm(chat_message, user_id)
+    additional_context = None
 
     if chat_message.use_summarization:
         # 1. get summaries from the vector store based on question
@@ -110,8 +109,9 @@ async def chat_endpoint(commons: CommonsDep, chat_message: ChatMessage, credenti
             additional_context = '---\nAdditional Context={}'.format(
                 '---\n'.join(data['content'] for data in reponse.data)
             ) + '\n'
-        model_response = qa(
-            {"question": additional_context + chat_message.question})
+    
+    if additional_context:
+        model_response = qa({"question": additional_context + chat_message.question})
     else:
         model_response = qa({"question": chat_message.question})
     history.append(("assistant", model_response["answer"]))
@@ -122,7 +122,7 @@ async def chat_endpoint(commons: CommonsDep, chat_message: ChatMessage, credenti
 #@app.post("/crawl/", dependencies=[Depends(JWTBearer())])
 async def crawl_endpoint(commons: CommonsDep, crawl_website: CrawlWebsite, enable_summarization: bool = False, credentials: dict = Depends(JWTBearer())):
     user = User(email=credentials.get('email', 'none'))
-    file_path, file_name = crawl_website.process()
+    file_path, file_name = await crawl_website.process()
 
     # Create a SpooledTemporaryFile from the file_path
     spooled_file = SpooledTemporaryFile()
