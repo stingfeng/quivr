@@ -17,7 +17,7 @@ export default function SignUp() {
   const { publish } = useToast();
   const handleSignUp = async () => {
     setIsPending(true);
-    let regex = /@(agora\.io|shengwang\.cn)$/;
+    const regex = /@(agora\.io|shengwang\.cn)$/;
     if (!regex.test(email)) {
       publish({
         variant: "danger",
