@@ -36,7 +36,7 @@ async def process_file(file: UploadFile, loader_class, file_suffix, enable_summa
     if chunk_size:
         chunk_size = int(chunk_size)
     else:
-        chunk_size = 10000
+        chunk_size = 500
     chunk_overlap = os.getenv("CHUNK_OVERLAP")
     if chunk_overlap:
         chunk_overlap = int(chunk_overlap)
