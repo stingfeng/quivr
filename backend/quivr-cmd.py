@@ -62,6 +62,7 @@ async def push_file(file_path, analyze_only: bool = False):
     if not analyze_only:
         msg = await upload_file(commons, file, True, credentials)
         print(msg)
+        return msg
     else:
         msg = await mock_filter_file(file)
         print('metadata={}'.format(msg['metadata']))
@@ -103,8 +104,7 @@ class FileSha1Cache:
             with open(self.filepath, "r") as f:
                 self.uploaded_file_sha1s = set(json.load(f))
 
-def lookup_file(cached_sha1s : FileSha1Cache, file_path):
-    file_sha1 = compute_sha1_from_file(file_path)
+def lookup_file(cached_sha1s : FileSha1Cache, file_sha1):
     if cached_sha1s.file_already_exists(file_sha1):
         return True
     response = commons['supabase'].table("vectors").select("id").filter("metadata->>file_sha1", "eq", file_sha1) \
@@ -122,10 +122,15 @@ async def push_files(directory, accept=None, ignore=None):
     fsc = FileSha1Cache("uploaded_file_sha1s.json")
     fsc.load()
     for file_path in files:
-        if lookup_file(fsc, file_path):
+        file_sha1 = compute_sha1_from_file(file_path)
+        if lookup_file(fsc, file_sha1):
             print(f'file {file_path} already exists.')
         else:
-            await push_file(file_path)
+            msg = await push_file(file_path)
+            if msg and msg.get("type", '') == "success":
+                fsc.add(file_sha1)
+                fsc.save()
+
 
 async def combine_files(directory, outfile, accept=None, ignore=None):
     files = await collect_files(directory, accept, ignore)
