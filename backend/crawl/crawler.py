@@ -7,7 +7,6 @@ import os
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
 import json
-import asyncio
 
 class CrawlWebsite(BaseModel):
     url : str

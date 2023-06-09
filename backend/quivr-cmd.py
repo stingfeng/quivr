@@ -10,6 +10,8 @@ from fastapi import UploadFile
 from main import chat_endpoint, explore_endpoint, delete_endpoint, download_endpoint, upload_file
 from mock_processors import mock_filter_file
 from crawl.crawler import CrawlWebsite
+from utils.file import compute_sha1_from_file
+import json
 
 commons = common_dependencies()
 
@@ -73,25 +75,57 @@ async def collect_files(directory, accept=None, ignore=None):
 
     accepted_files = []
     if accept:
-        for file_type in accept:
-            accepted_files.extend(glob.glob('**/'+file_type, recursive=True))
+        accepted_files.extend(glob.glob('**/'+accept, recursive=True))
     else:
         accepted_files.extend(glob.glob('**/*', recursive=True))
 
     if ignore:
-        for file_type in ignore:
-            ignored_files = glob.glob('**/'+file_type, recursive=True)
-            accepted_files = [f for f in accepted_files if f not in ignored_files]
+        ignored_files = glob.glob('**/'+ignore, recursive=True)
+        accepted_files = [f for f in accepted_files if f not in ignored_files]
 
     accepted_files = [f for f in accepted_files if not os.path.isdir(f)]
     return accepted_files
+
+class FileSha1Cache:
+    filepath : str
+    uploaded_file_sha1s : set = set()
+    def __init__(self, filepath):
+        self.filepath = filepath
+    def add(self, file_sha1):
+        self.uploaded_file_sha1s.add(file_sha1)
+    def file_already_exists(self, file_sha1):
+        return file_sha1 in self.uploaded_file_sha1s
+    def save(self):
+        with open(self.filepath, "w") as f:
+            json.dump(list(self.uploaded_file_sha1s), f)
+    def load(self):
+        if os.path.exists(self.filepath):
+            with open(self.filepath, "r") as f:
+                self.uploaded_file_sha1s = set(json.load(f))
+
+def lookup_file(cached_sha1s : FileSha1Cache, file_path):
+    file_sha1 = compute_sha1_from_file(file_path)
+    if cached_sha1s.file_already_exists(file_sha1):
+        return True
+    response = commons['supabase'].table("vectors").select("id").filter("metadata->>file_sha1", "eq", file_sha1) \
+        .filter("user_id", "eq", credentials.get('email', 'none')).execute()
+    if response and len(response.data) > 0:
+        cached_sha1s.add(file_sha1)
+        cached_sha1s.save()
+        return True
+    return False
 
 async def push_files(directory, accept=None, ignore=None):
     files = await collect_files(directory, accept, ignore)
     if not files:
         return
-    for filename in files:
-        await push_file(filename)
+    fsc = FileSha1Cache("uploaded_file_sha1s.json")
+    fsc.load()
+    for file_path in files:
+        if lookup_file(fsc, file_path):
+            print(f'file {file_path} already exists.')
+        else:
+            await push_file(file_path)
 
 async def combine_files(directory, outfile, accept=None, ignore=None):
     files = await collect_files(directory, accept, ignore)
