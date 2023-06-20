@@ -1,6 +1,6 @@
 import os
 from typing import Annotated, List, Tuple
-
+from datetime import datetime
 from fastapi import Depends, UploadFile
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.schema import Document
@@ -89,5 +89,8 @@ def similarity_search(query, table='match_summaries', top_k=5, threshold=0.5):
     ).execute()
     return summaries.data
 
-
-
+def create_qalog(question, answer, metadata):
+    logger.info(f"New qalog entry: question={question}, answer={answer}, metadata={metadata}")
+    ts = datetime.now().isoformat()
+    supabase_client.table("qalogs").insert(
+        {"question": question, "answer": answer, "metadata": metadata, "time": ts}).execute()

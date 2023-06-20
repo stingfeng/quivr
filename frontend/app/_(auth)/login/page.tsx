@@ -1,7 +1,6 @@
 "use client";
 import Button from "@/app/components/ui/Button";
 import Card from "@/app/components/ui/Card";
-import { Divider } from "@/app/components/ui/Divider";
 import Field from "@/app/components/ui/Field";
 import PageHeading from "@/app/components/ui/PageHeading";
 import { useSupabase } from "@/app/supabase-provider";
@@ -9,8 +8,6 @@ import { useToast } from "@/lib/hooks/useToast";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useState } from "react";
-import { GoogleLoginButton } from "./components/GoogleLogin";
-import { MagicLinkLogin } from "./components/MagicLinkLogin";
 
 export default function Login() {
   const { supabase, session } = useSupabase();
@@ -79,12 +76,6 @@ export default function Login() {
               </Button>
               <Link href="/signup">Don{"'"}t have an account? Sign up</Link>
             </div>
-            <Divider text="or" />
-            <div className="flex flex-col items-center justify-center mt-2 gap-2">
-              <GoogleLoginButton />
-            </div>
-            <Divider text="or" />
-            <MagicLinkLogin email={email} setEmail={setEmail} />
           </form>
         </Card>
       </section>

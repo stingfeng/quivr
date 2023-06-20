@@ -74,22 +74,27 @@ async def chat_endpoint(commons: CommonsDep, chat_message: ChatMessage, credenti
     old_request_count = userItem['requests_count']
 
     history = chat_message.history
-    history.append(("user", chat_message.question))
-
 
     if old_request_count == 0: 
         create_user(user_id= user.email, date=date)
     elif  old_request_count <  float(max_requests_number) : 
         update_user_request_count(user_id=user.email,  date=date, requests_count= old_request_count+1)
+        return await chat_endpoint_v1(commons, chat_message)
     else: 
         history.append(('assistant', "You have reached your requests limit"))
         return {"history": history }
 
+@app.post("/v1/chat/")
+async def chat_endpoint_v1(commons: CommonsDep, chat_message: ChatMessage):
+
+    history = chat_message.history
+    history.append(("user", chat_message.question))
+
     # [HACK] all users share one brain if specified
     # other endpoints do not use this hack to prevent from dangerous operations
     user_id = os.environ.get("USER_EMAIL")
-    if user_id is None:
-        user_id = user.email
+    # if user_id is None:
+    #     user_id = user.email
     qa = get_qa_llm(chat_message, user_id)
     additional_context = None
 

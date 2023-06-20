@@ -1,4 +1,3 @@
-import { useSupabase } from "@/app/supabase-provider";
 import axios from "axios";
 import { useBrainConfig } from "./context/BrainConfigProvider/hooks/useBrainConfig";
 
@@ -7,14 +6,14 @@ const axiosInstance = axios.create({
 });
 
 export const useAxios = () => {
-  const { session } = useSupabase();
+  // const { session } = useSupabase();
   const {
     config: { backendUrl },
   } = useBrainConfig();
   axiosInstance.interceptors.request.clear();
   axiosInstance.interceptors.request.use(
     async (config) => {
-      config.headers["Authorization"] = "Bearer " + session?.access_token;
+      // config.headers["Authorization"] = "Bearer " + session?.access_token;
       config.baseURL = backendUrl ?? config.baseURL;
 
       return config;

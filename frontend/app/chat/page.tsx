@@ -1,23 +1,22 @@
 "use client";
 import Link from "next/link";
-import { MdMic, MdMicOff, MdSettings } from "react-icons/md";
+import { MdSettings } from "react-icons/md";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import PageHeading from "../components/ui/PageHeading";
 import ChatMessages from "./components/ChatMessages";
 import { useQuestion } from "./hooks/useQuestion";
-import { useSpeech } from "./hooks/useSpeech";
 
 export default function ChatPage() {
   const { history, isPending, question, askQuestion, setQuestion } =
     useQuestion();
-  const { isListening, speechSupported, startListening } = useSpeech();
+  // const { isListening, speechSupported, startListening } = useSpeech();
 
   return (
     <main className="min-h-screen w-full flex flex-col pt-32">
       <section className="flex flex-col justify-center items-center flex-1 gap-5 h-full">
         <PageHeading
-          title="Chat with your brain"
+          title="Chat with Agora DocAI"
           subtitle="Talk to a language model about your uploaded data"
         />
         {/* Chat */}
@@ -43,7 +42,7 @@ export default function ChatPage() {
                 {isPending ? "Thinking..." : "Chat"}
               </Button>
               {/* Mic Button */}
-              <Button
+              {/* <Button
                 className="px-3"
                 variant={"tertiary"}
                 type="button"
@@ -55,7 +54,7 @@ export default function ChatPage() {
                 ) : (
                   <MdMic className="text-2xl" />
                 )}
-              </Button>
+              </Button> */}
               <Link href={"/config"}>
                 <Button className="px-3" variant={"tertiary"}>
                   <MdSettings className="text-2xl" />

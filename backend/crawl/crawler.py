@@ -1,12 +1,13 @@
 import requests
 from pydantic import BaseModel
-import requests
 import re
 import unicodedata
 import os
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
 import json
+from utils.file import compute_sha1_from_content
+
 
 class CrawlWebsite(BaseModel):
     url : str
@@ -18,36 +19,42 @@ class CrawlWebsite(BaseModel):
         crawler = Crawler(url=self.url, js=self.js, depth=self.depth,
                         max_pages=self.max_pages, max_time=self.max_time,
                         out_dir=out_dir)
-        crawler.process()
+        await crawler.process()
 
-class UrlState:
+class SiteInfo:
     filepath : str
-    fetched : set = set()
+    fetched_urls : dict = dict()
     unfetched : set = set()
     def __init__(self, filepath):
         self.filepath = filepath
+        self.load()
 
     def add_new_url(self, url):
-        if url not in self.fetched:
+        if url not in self.fetched_urls:
             #print(url)
             self.unfetched.add(url)
     def remove_not_found_url(self, url):
         self.unfetched.discard(url)
-    def add_fetched_url(self, url):
-        self.fetched.add(url)
+    def add_fetched_url(self, url, filepath = None, filesha1 = None):
         self.unfetched.discard(url)
+        if filepath is not None and filesha1 is not None:
+            if filesha1 in self.fetched_urls:
+                print(f"file {filepath} / url {url} has been downloaded, skip")
+                return False
+            self.fetched_urls[filesha1] = {"filepath": filepath, "url": url}
+        return True
     def get_unfetch_urls(self):
         return self.unfetched
     def save(self):
         with open(self.filepath, "w") as f:
-            urls = {"fetched": list(self.fetched), "unfetched": list(self.unfetched)}
+            urls = {"fetched": self.fetched_urls, "unfetched": list(self.unfetched)}
             json.dump(urls, f)
     def load(self):
         if os.path.exists(self.filepath):
             with open(self.filepath, "r") as f:
                 urls = json.load(f)
-                self.fetched = urls.get("fetched", ())
-                self.unfetched = urls.get("unfetched", ())
+                self.fetched_urls = urls.get("fetched", ())
+                self.unfetched = set(urls.get("unfetched", ()))
 
 class Crawler:
     url : str
@@ -58,7 +65,7 @@ class Crawler:
     pattern : re.Pattern
     base_url : str
     out_dir: str
-    urls : UrlState = None
+    urls : SiteInfo = None
     pages : int = 0
     def __init__(self, url, out_dir, js : bool = False, depth : int = 1, max_pages : int = 100, max_time : int = 60):
         self.url = url
@@ -67,7 +74,7 @@ class Crawler:
         self.max_pages = max_pages
         self.max_time = max_time
         self.out_dir = out_dir or 'out'
-        self.urls = UrlState(os.path.join(self.out_dir, "crawl_state.json"))
+        self.urls = SiteInfo(os.path.join(self.out_dir, "site_metadata.json"))
 
         parsed_url = urlparse(self.url)
         self.pattern=re.compile(f"^{self.url}"),
@@ -106,8 +113,8 @@ class Crawler:
         # 保留查询参数和锚点部分
         if parsed_url.query:
             path_parts.append(slugify(parsed_url.query))
-        if parsed_url.fragment:
-            path_parts.append(slugify(parsed_url.fragment))
+        # if parsed_url.fragment:
+        #     path_parts.append(slugify(parsed_url.fragment))
 
         #print(path_parts)
         if not path_parts or path_parts[-1] == "":
@@ -137,14 +144,13 @@ class Crawler:
         content, status_code = self._crawl(url)
         if content:
             self.pages = self.pages + 1
-            self.urls.add_fetched_url(url)
+            if self.urls.add_fetched_url(url, filepath, compute_sha1_from_content(content.encode('utf-8'))):
+                self.write_file(url, content)
             print(f"Successfully crawled {url}")
         else:
             print(f"Failed to read or crawl {url}")
             if status_code == 404:
                 self.urls.remove_not_found_url(url)
-        if content:
-            self.write_file(url, content)
         return content
     
     def _process_one(self, url):
@@ -157,8 +163,8 @@ class Crawler:
         self.urls.save()
         
     def should_stop(self):
-        if self.pages >= self.max_pages:
-            return True
+        # if self.pages >= self.max_pages:
+        #     return True
         return False
 
     def _find_all_links(self, content):
@@ -184,7 +190,7 @@ class Crawler:
 
 def slugify(text):
     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
+    text = text.replace('=', '-')  # Replace equals signs with hyphens
     text = re.sub(r'[^\w\s-]', '', text).strip().lower()
     text = re.sub(r'[-\s]+', '-', text)
     return text
-

@@ -4,7 +4,7 @@ import Hero from "./Hero";
 
 export default function HomePage() {
   if (process.env.NEXT_PUBLIC_ENV === "local") {
-    redirect("/upload");
+    redirect("/chat");
   }
   redirect("/chat");
 

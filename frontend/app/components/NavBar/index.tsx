@@ -43,7 +43,7 @@ const NavBar: FC = () => {
             width={48}
             height={48}
           />
-          <h1 className="font-bold">Quivr</h1>
+          <h1 className="font-bold">Agora DocAI</h1>
         </Link>
         <NavItems className="hidden sm:flex" />
         <MobileMenu />

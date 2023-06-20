@@ -161,10 +161,11 @@ if __name__ == '__main__':
     # 根据命令行参数来选择运行哪个函数
     if args.command == 'run':
         chat_message = ChatMessage(
+            model = "gpt-3.5-turbo-0613",
             question='',
             history = [],
             max_tokens = 1000,
-            use_summarization = True,
+            use_summarization = False,
         )
         while True:
             chat_message.question = input("Enter your question here: ")
